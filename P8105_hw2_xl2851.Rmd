@@ -53,12 +53,27 @@ The median number of sports balls in a dumpster in 2017 is `r median(pull(trash_
 
 
 # problem 2
-## clean the data in pols_months
+## first,clean the data in pols_months
 ```{r}
-pols_data= read_csv("./fivethirtyeight_datasets/pols-month.csv")
+pols_data= read_csv("./fivethirtyeight_datasets/pols-month.csv")%>%
+  separate(mon, c("year", "month", "day"))%>% 
+    mutate(month=month.name[month_numeric=as.numeric(month)],president='gop','dem')%>% select(-prez_dem, -prez_gop, -day)
 ```
 
+## second, clean the data in snp.csv
+```{r}
+snp_data = read_csv(file = "./fivethirtyeight_datasets/snp.csv")%>% 
+ separate(col=date,into= c("month", "day", "year"))%>% 
+    mutate(month=month.name[month_numeric=as.numeric(month)])%>% 
+  select(-day)%>%
+  select("year", "month","close")
+```
 
+## third, tidy the unemployment data
+```{r}
+unemployment_data = read_csv(file = "./fivethirtyeight_datasets/unemployment.csv")
+
+```
 
 
 
