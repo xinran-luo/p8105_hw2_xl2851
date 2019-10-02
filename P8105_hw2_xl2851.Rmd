@@ -1,0 +1,65 @@
+---
+title: "P8105_hw2_xl2851"
+output: github_document
+---
+
+# problem 1
+## read and clean the Mr. Trash Wheel sheet
+```{r}
+library(tidyverse)
+library(readxl)
+library(dplyr)
+
+trash_data = read_excel(
+  "./Trash-Wheel-Collection-Totals-8-6-19.xlsx",sheet="Mr. Trash Wheel", range = cell_cols("A2:N408")) %>%
+  janitor::clean_names() %>%
+  drop_na(dumpster)%>%
+  mutate(sports_balls=round(sports_balls, digit=0), sports_balls_new=as.integer(sports_balls))
+  
+```
+
+## read and clean precipitation data for 2017 and 2018
+```{r}
+prec_data_2017=read_excel(
+  "./Trash-Wheel-Collection-Totals-8-6-19.xlsx",sheet="2017 Precipitation", skip=1) %>%
+  janitor::clean_names() %>%
+  mutate(year='2017')%>%
+  drop_na()
+  
+```
+```{r}
+prec_data_2018=read_excel(
+  "./Trash-Wheel-Collection-Totals-8-6-19.xlsx",sheet="2018 Precipitation", skip=1) %>%
+  janitor::clean_names() %>%
+  mutate(year='2018')%>%
+  drop_na()
+```
+
+## combine datasets and convert month
+```{r}
+prec_data_join=
+  full_join(prec_data_2017, prec_data_2018)%>%
+  mutate(month = month.name [month] )
+```
+There are `r nrow(prec_data_join)` observations in the joint precipitation dataset.
+
+There are `r nrow (trash_data)` observations in the Mr.Trash Wheel sheet.
+
+Examples of key variables:
+
+The total precipitation in 2018 is `r sum(pull(prec_data_2018,total))`
+
+The median number of sports balls in a dumpster in 2017 is `r median(pull(trash_data,sports_balls))`
+
+
+# problem 2
+## clean the data in pols_months
+```{r}
+pols_data= read_csv("./fivethirtyeight_datasets/pols-month.csv")
+```
+
+
+
+
+
+
