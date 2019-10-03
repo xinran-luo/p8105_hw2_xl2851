@@ -88,6 +88,7 @@ unemployment_data = read_csv(file = "./fivethirtyeight_datasets/unemployment.csv
   mutate(year=as.character(year))
 ```
 
+## finally, join the 3 datasets
 ```{r}
 pols_snp_join=
   full_join(pols_data, snp_data)
@@ -97,21 +98,66 @@ pols_snp_join=
 unemployment_pols_snp_join=
   full_join(pols_snp_join,unemployment_tidy_data)
 ```
+
+
+# problem 3
+## load and tidy the dataset
 ```{r}
-popbabynames_data = read_csv(file = "./Popular_Baby_Names.csv")%>%
-  janitor::clean_names()%>%
+popbabynames_data = read_csv(file = "./Popular_Baby_Names.csv") %>%
+  janitor::clean_names() %>%
   mutate(
     childs_first_name=str_to_lower(childs_first_name),
+    ethnicity = replace (ethnicity, ethnicity == "ASIAN AND PACI", "ASIAN AND PACIFIC ISLANDER"),
+    ethnicity = replace (ethnicity, ethnicity == "BLACK NON HISP", "BLACK NON HISPANIC"),
+    ethnicity = replace (ethnicity, ethnicity == "WHITE NON HISP", "WHITE NON HISPANIC")
    )%>%
    distinct(year_of_birth, gender, ethnicity, childs_first_name, count, rank, .keep_all=TRUE)
 
 ```
 
-
+## rank in popularity of the name "olivia"
 ```{r}
 olivia_rank=
   filter(popbabynames_data, childs_first_name == "olivia")
 ```
 
+```{r}
+olivia_year=
+  select(olivia_rank,ethnicity, rank, year_of_birth)
+```
 
+```{r}
+olivia_pivot=  
+pivot_wider(
+    olivia_year,
+    names_from = "year_of_birth",
+    values_from = "rank"
+  )
+```
+
+## rank in popularity of the name "ethan"
+```{r}
+ethan_rank=filter(popbabynames_data, childs_first_name == "ethan")
+```
+
+```{r}
+ethan_year=
+  select(ethan_rank,ethnicity, rank, year_of_birth)
+```
+
+```{r}
+ethan_pivot=  
+pivot_wider(
+    ethan_year,
+    names_from = "year_of_birth",
+    values_from = "rank"
+  )
+```
+
+## scatter plot
+```{r}
+scatterplot_df=filter(popbabynames_data, gender == "MALE", year_of_birth=="2016", ethnicity=="WHITE NON HISPANIC")
+
+ggplot(scatterplot_df, aes(x = rank, y = count)) + geom_point()
+```
 
