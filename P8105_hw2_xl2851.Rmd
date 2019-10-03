@@ -56,13 +56,15 @@ The median number of sports balls in a dumpster in 2017 is `r median(pull(trash_
 ## first,clean the data in pols_months
 ```{r}
 pols_data= read_csv("./fivethirtyeight_datasets/pols-month.csv")%>%
+janitor::clean_names()%>%
   separate(mon, c("year", "month", "day"))%>% 
     mutate(month=month.name[month_numeric=as.numeric(month)],president='gop','dem')%>% select(-prez_dem, -prez_gop, -day)
 ```
 
 ## second, clean the data in snp.csv
 ```{r}
-snp_data = read_csv(file = "./fivethirtyeight_datasets/snp.csv")%>% 
+snp_data = read_csv(file = "./fivethirtyeight_datasets/snp.csv")%>%
+  janitor::clean_names()%>%
  separate(col=date,into= c("month", "day", "year"))%>% 
     mutate(month=month.name[month_numeric=as.numeric(month)])%>% 
   select(-day)%>%
@@ -71,10 +73,45 @@ snp_data = read_csv(file = "./fivethirtyeight_datasets/snp.csv")%>%
 
 ## third, tidy the unemployment data
 ```{r}
-unemployment_data = read_csv(file = "./fivethirtyeight_datasets/unemployment.csv")
+unemployment_data = read_csv(file = "./fivethirtyeight_datasets/unemployment.csv")%>%
+  janitor::clean_names()
+```
+
+
+```{r}
+  unemployment_tidy_data = 
+  pivot_longer(
+    unemployment_data, 
+    jan:dec,
+    names_to = "month", 
+    values_to = "%_of_unemployment")%>%
+  mutate(year=as.character(year))
+```
+
+```{r}
+pols_snp_join=
+  full_join(pols_data, snp_data)
+```
+
+```{r}
+unemployment_pols_snp_join=
+  full_join(pols_snp_join,unemployment_tidy_data)
+```
+```{r}
+popbabynames_data = read_csv(file = "./Popular_Baby_Names.csv")%>%
+  janitor::clean_names()%>%
+  mutate(
+    childs_first_name=str_to_lower(childs_first_name),
+   )%>%
+   distinct(year_of_birth, gender, ethnicity, childs_first_name, count, rank, .keep_all=TRUE)
 
 ```
 
+
+```{r}
+olivia_rank=
+  filter(popbabynames_data, childs_first_name == "olivia")
+```
 
 
 
