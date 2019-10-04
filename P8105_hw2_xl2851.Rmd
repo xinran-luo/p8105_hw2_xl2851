@@ -4,7 +4,7 @@ output: github_document
 ---
 
 # problem 1
-## read and clean the Mr. Trash Wheel sheet
+## 1(1).read and clean the Mr. Trash Wheel sheet
 ```{r}
 library(tidyverse)
 library(readxl)
@@ -14,11 +14,11 @@ trash_data = read_excel(
   "./Trash-Wheel-Collection-Totals-8-6-19.xlsx",sheet="Mr. Trash Wheel", range = cell_cols("A2:N408")) %>%
   janitor::clean_names() %>%
   drop_na(dumpster)%>%
-  mutate(sports_balls=round(sports_balls, digit=0), sports_balls_new=as.integer(sports_balls))
+  mutate(sports_balls=round(sports_balls, digit=0),    sports_balls=as.integer(sports_balls))
   
 ```
 
-## read and clean precipitation data for 2017 and 2018
+## 1(2).read and clean precipitation data for 2017 and 2018
 ```{r}
 prec_data_2017=read_excel(
   "./Trash-Wheel-Collection-Totals-8-6-19.xlsx",sheet="2017 Precipitation", skip=1) %>%
@@ -35,46 +35,51 @@ prec_data_2018=read_excel(
   drop_na()
 ```
 
-## combine datasets and convert month
+## 1(3).combine datasets and convert month
 ```{r}
 prec_data_join=
   full_join(prec_data_2017, prec_data_2018)%>%
   mutate(month = month.name [month] )
 ```
-There are `r nrow(prec_data_join)` observations in the joint precipitation dataset.
-
-There are `r nrow (trash_data)` observations in the Mr.Trash Wheel sheet.
-
-Examples of key variables:
+(1)There are `r nrow(prec_data_join)` observations in the joint precipitation dataset.
 
 The total precipitation in 2018 is `r sum(pull(prec_data_2018,total))`
 
+Examples of key variables:total, describing the total precipitation in each month in 2017 and 2018.
+
+(2)There are `r nrow (trash_data)` observations in the Mr.Trash Wheel sheet.
+
 The median number of sports balls in a dumpster in 2017 is `r median(pull(trash_data,sports_balls))`
 
+Examples of key variables:weight_tons, volume_cubic_yards, plastic_bottles
 
 # problem 2
-## first,clean the data in pols_months
+## 2(1).clean the data in pols_months
 ```{r}
-pols_data= read_csv("./fivethirtyeight_datasets/pols-month.csv")%>%
+  pols_data= read_csv("./fivethirtyeight_datasets/pols-month.csv")%>%
 janitor::clean_names()%>%
   separate(mon, c("year", "month", "day"))%>% 
-    mutate(month=month.name[month_numeric=as.numeric(month)],president='gop','dem')%>% select(-prez_dem, -prez_gop, -day)
+    mutate(month=month.abb[month_numeric=as.numeric(month)],
+           month=tolower(month),
+           president=ifelse(prez_gop, 'gop','dem'))%>% select(-prez_dem, -prez_gop, -day)
 ```
 
-## second, clean the data in snp.csv
+## 2(2).clean the data in snp.csv
 ```{r}
 snp_data = read_csv(file = "./fivethirtyeight_datasets/snp.csv")%>%
   janitor::clean_names()%>%
  separate(col=date,into= c("month", "day", "year"))%>% 
-    mutate(month=month.name[month_numeric=as.numeric(month)])%>% 
+    mutate(month=month.abb[month_numeric=as.numeric(month)],
+           month=tolower(month))%>% 
   select(-day)%>%
   select("year", "month","close")
 ```
 
-## third, tidy the unemployment data
+## 2(3).tidy the unemployment data
 ```{r}
 unemployment_data = read_csv(file = "./fivethirtyeight_datasets/unemployment.csv")%>%
-  janitor::clean_names()
+  janitor::clean_names()%>%
+  mutate(year=as.character(year))
 ```
 
 
@@ -84,14 +89,14 @@ unemployment_data = read_csv(file = "./fivethirtyeight_datasets/unemployment.csv
     unemployment_data, 
     jan:dec,
     names_to = "month", 
-    values_to = "%_of_unemployment")%>%
+    values_to = "%_of_unemployment") %>%
   mutate(year=as.character(year))
 ```
 
-## finally, join the 3 datasets
+## 2(4).join the 3 datasets
 ```{r}
 pols_snp_join=
-  full_join(pols_data, snp_data)
+  full_join(pols_data, snp_data, by=c("year", "month"))
 ```
 
 ```{r}
@@ -99,9 +104,44 @@ unemployment_pols_snp_join=
   full_join(pols_snp_join,unemployment_tidy_data)
 ```
 
+1. In the cleaned "pols" dataset, there are `r nrow(pols_data)` rows and `r ncol(pols_data)`columns.The year range in this dataset is from `r min(pull(pols_data, year))` to `r max(pull(pols_data, year))`.
+
+key variables:
+
+(1)president:indicator of whether the president was republican or democraticon the associated date (1 = yes, 0 = no)
+
+(2)gov_gop,sen_gop,rep_gop:the number of republican governors,senators,representatives on the associated date
+
+(3)gov_dem,sen_dem,rep_dem:the number of democratic governors,senators,representatives on the associated date
+
+2. In the cleaned "snp" dataset, there are `r nrow(snp_data)` rows and `r ncol(snp_data)` columns.The year range in this dataset is from `r min(pull(snp_data, year))` to `r max(pull(snp_data, year))`.
+
+key variables:
+
+(1)close: the closing values of the S&P stock index on the associated date
+
+3. In the cleaned "unemployment" dataset, there are `r nrow(unemployment_tidy_data)` rows and `r ncol(unemployment_tidy_data)` columns.The year range in this dataset is from `r min(pull(unemployment_tidy_data, year))` to `r max(pull(unemployment_tidy_data, year))`.
+
+key variables:
+
+(1)"% of unemployment": the created variable "percentage of unemployment" is a key factor to reflect the administration of a president.
+
+4. In the cleaned joint dataset, there are `r nrow(unemployment_pols_snp_join)` rows and `r ncol(unemployment_pols_snp_join)` columns.The year range in this dataset is from `r min(pull(unemployment_pols_snp_join, year))` to `r max(pull(unemployment_pols_snp_join, year))`.
+
+key variables:
+
+(1)president:indicator of whether the president was republican or democraticon the associated date (1 = yes, 0 = no)
+
+(2)gov_gop,sen_gop,rep_gop:the number of republican governors,senators,representatives on the associated date
+
+(3)gov_dem,sen_dem,rep_dem:the number of democratic governors,senators,representatives on the associated date
+
+(4)close: the closing values of the S&P stock index on the associated date
+
+(5)"% of unemployment": the created variable "percentage of unemployment" is a key factor to reflect the administration of a president.
 
 # problem 3
-## load and tidy the dataset
+## 3(1).load and tidy the dataset
 ```{r}
 popbabynames_data = read_csv(file = "./Popular_Baby_Names.csv") %>%
   janitor::clean_names() %>%
@@ -115,46 +155,29 @@ popbabynames_data = read_csv(file = "./Popular_Baby_Names.csv") %>%
 
 ```
 
-## rank in popularity of the name "olivia"
-```{r}
-olivia_rank=
-  filter(popbabynames_data, childs_first_name == "olivia")
-```
-
-```{r}
-olivia_year=
-  select(olivia_rank,ethnicity, rank, year_of_birth)
-```
-
+## 3(2).rank in popularity of the name "olivia"
 ```{r}
 olivia_pivot=  
+  filter(popbabynames_data, childs_first_name == "olivia")%>%
+  select(ethnicity, rank, year_of_birth)%>%
 pivot_wider(
-    olivia_year,
     names_from = "year_of_birth",
     values_from = "rank"
   )
 ```
 
-## rank in popularity of the name "ethan"
+## 3(3).Produce a similar table showing the most popular name among male children over time
 ```{r}
-ethan_rank=filter(popbabynames_data, childs_first_name == "ethan")
-```
-
-```{r}
-ethan_year=
-  select(ethan_rank,ethnicity, rank, year_of_birth)
-```
-
-```{r}
-ethan_pivot=  
+ethan_pivot=
+    filter(popbabynames_data, gender == "MALE", rank =="1")%>%
+  select(gender,ethnicity, rank, childs_first_name,year_of_birth)%>%
 pivot_wider(
-    ethan_year,
     names_from = "year_of_birth",
     values_from = "rank"
   )
 ```
 
-## scatter plot
+## 3(4).scatter plot
 ```{r}
 scatterplot_df=filter(popbabynames_data, gender == "MALE", year_of_birth=="2016", ethnicity=="WHITE NON HISPANIC")
 
