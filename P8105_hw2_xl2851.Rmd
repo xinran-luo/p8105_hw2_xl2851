@@ -13,6 +13,7 @@ library(dplyr)
 trash_data = read_excel(
   "./Trash-Wheel-Collection-Totals-8-6-19.xlsx",sheet="Mr. Trash Wheel", range = cell_cols("A2:N408")) %>%
   janitor::clean_names() %>%
+  select(-x15, -x16,-x17) %>%
   drop_na(dumpster)%>%
   mutate(sports_balls=round(sports_balls, digit=0),    sports_balls=as.integer(sports_balls))
   
@@ -49,7 +50,7 @@ Examples of key variables:total, describing the total precipitation in each mont
 
 (2)There are `r nrow (trash_data)` observations in the Mr.Trash Wheel sheet.
 
-The median number of sports balls in a dumpster in 2017 is `r median(pull(trash_data,sports_balls))`
+The median number of sports balls in a dumpster in 2017 is `r median(pull(trash_data%>% filter(year == 2017), sports_balls))`
 
 Examples of key variables:weight_tons, volume_cubic_yards, plastic_bottles
 
@@ -59,38 +60,32 @@ Examples of key variables:weight_tons, volume_cubic_yards, plastic_bottles
   pols_data= read_csv("./fivethirtyeight_datasets/pols-month.csv")%>%
 janitor::clean_names()%>%
   separate(mon, c("year", "month", "day"))%>% 
-    mutate(month=month.abb[month_numeric=as.numeric(month)],
-           month=tolower(month),
-           president=ifelse(prez_gop, 'gop','dem'))%>% select(-prez_dem, -prez_gop, -day)
+    mutate(month=month.abb[as.numeric(month)],
+    month=tolower(month),
+    president=ifelse(prez_gop, 'gop','dem'))%>% 
+    select(-prez_dem, -prez_gop, -day)
 ```
 
 ## 2(2).clean the data in snp.csv
 ```{r}
 snp_data = read_csv(file = "./fivethirtyeight_datasets/snp.csv")%>%
   janitor::clean_names()%>%
- separate(col=date,into= c("month", "day", "year"))%>% 
-    mutate(month=month.abb[month_numeric=as.numeric(month)],
+  separate(col=date,into= c("month", "day", "year"))%>% 
+  mutate(month=month.abb[as.numeric(month)],
            month=tolower(month))%>% 
-  select(-day)%>%
-  select("year", "month","close")
+  select(year, month,close,-day)
 ```
 
 ## 2(3).tidy the unemployment data
 ```{r}
-unemployment_data = read_csv(file = "./fivethirtyeight_datasets/unemployment.csv")%>%
-  janitor::clean_names()%>%
-  mutate(year=as.character(year))
-```
-
-
-```{r}
-  unemployment_tidy_data = 
+  unemployment_tidy_data =read_csv(file = "./fivethirtyeight_datasets/unemployment.csv") %>% 
   pivot_longer(
-    unemployment_data, 
-    jan:dec,
+    Jan:Dec,
     names_to = "month", 
-    values_to = "%_of_unemployment") %>%
-  mutate(year=as.character(year))
+    values_to = "%_of_unemployment")%>%
+  mutate(month=tolower(month),Year=as.character(Year))%>%
+  select(year=Year, everything())
+    
 ```
 
 ## 2(4).join the 3 datasets
@@ -147,11 +142,9 @@ popbabynames_data = read_csv(file = "./Popular_Baby_Names.csv") %>%
   janitor::clean_names() %>%
   mutate(
     childs_first_name=str_to_lower(childs_first_name),
-    ethnicity = replace (ethnicity, ethnicity == "ASIAN AND PACI", "ASIAN AND PACIFIC ISLANDER"),
-    ethnicity = replace (ethnicity, ethnicity == "BLACK NON HISP", "BLACK NON HISPANIC"),
-    ethnicity = replace (ethnicity, ethnicity == "WHITE NON HISP", "WHITE NON HISPANIC")
+     ethnicity = recode(ethnicity, "ASIAN AND PACI" = "ASIAN AND PACIFIC ISLANDER", "BLACK NON HISP"= "BLACK NON HISPANIC","WHITE NON HISP" = "WHITE NON HISPANIC")
    )%>%
-   distinct(year_of_birth, gender, ethnicity, childs_first_name, count, rank, .keep_all=TRUE)
+   distinct()
 
 ```
 
@@ -168,12 +161,12 @@ pivot_wider(
 
 ## 3(3).Produce a similar table showing the most popular name among male children over time
 ```{r}
-ethan_pivot=
+most_pop_male=
     filter(popbabynames_data, gender == "MALE", rank =="1")%>%
   select(gender,ethnicity, rank, childs_first_name,year_of_birth)%>%
 pivot_wider(
     names_from = "year_of_birth",
-    values_from = "rank"
+    values_from = "childs_first_name"
   )
 ```
 
@@ -181,6 +174,10 @@ pivot_wider(
 ```{r}
 scatterplot_df=filter(popbabynames_data, gender == "MALE", year_of_birth=="2016", ethnicity=="WHITE NON HISPANIC")
 
-ggplot(scatterplot_df, aes(x = rank, y = count)) + geom_point()
+ggplot(scatterplot_df, aes(x = rank, y = count)) + geom_point()+
+  labs(
+    title = "The first name of male, white non-hispanic children born in 2016",
+    x = "The rank in popularity of that name (rank)",
+    y = "The number of children with a name (count)")
 ```
 
