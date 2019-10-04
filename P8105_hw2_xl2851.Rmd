@@ -142,37 +142,36 @@ popbabynames_data = read_csv(file = "./Popular_Baby_Names.csv") %>%
   janitor::clean_names() %>%
   mutate(
     childs_first_name=str_to_lower(childs_first_name),
+    gender=str_to_lower(gender),
      ethnicity = recode(ethnicity, "ASIAN AND PACI" = "ASIAN AND PACIFIC ISLANDER", "BLACK NON HISP"= "BLACK NON HISPANIC","WHITE NON HISP" = "WHITE NON HISPANIC")
    )%>%
    distinct()
-
 ```
 
 ## 3(2).rank in popularity of the name "olivia"
 ```{r}
-olivia_pivot=  
-  filter(popbabynames_data, childs_first_name == "olivia")%>%
+  filter(popbabynames_data, gender == "female", childs_first_name == "olivia")%>%
   select(ethnicity, rank, year_of_birth)%>%
-pivot_wider(
+  pivot_wider(
     names_from = "year_of_birth",
     values_from = "rank"
-  )
+  ) %>% 
+  knitr::kable()
 ```
 
 ## 3(3).Produce a similar table showing the most popular name among male children over time
 ```{r}
-most_pop_male=
-    filter(popbabynames_data, gender == "MALE", rank =="1")%>%
+    filter(popbabynames_data, gender == "male", rank =="1")%>%
   select(gender,ethnicity, rank, childs_first_name,year_of_birth)%>%
 pivot_wider(
     names_from = "year_of_birth",
     values_from = "childs_first_name"
-  )
+  ) %>% knitr::kable()
 ```
 
 ## 3(4).scatter plot
 ```{r}
-scatterplot_df=filter(popbabynames_data, gender == "MALE", year_of_birth=="2016", ethnicity=="WHITE NON HISPANIC")
+scatterplot_df=filter(popbabynames_data, gender == "male", year_of_birth=="2016", ethnicity=="WHITE NON HISPANIC")
 
 ggplot(scatterplot_df, aes(x = rank, y = count)) + geom_point()+
   labs(
