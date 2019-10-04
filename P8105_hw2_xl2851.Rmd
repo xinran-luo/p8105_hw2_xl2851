@@ -91,12 +91,12 @@ snp_data = read_csv(file = "./fivethirtyeight_datasets/snp.csv")%>%
 ## 2(4).join the 3 datasets
 ```{r}
 pols_snp_join=
-  full_join(pols_data, snp_data, by=c("year", "month"))
+  left_join(pols_data, snp_data, by=c("year", "month"))
 ```
 
 ```{r}
 unemployment_pols_snp_join=
-  full_join(pols_snp_join,unemployment_tidy_data)
+  left_join(pols_snp_join,unemployment_tidy_data)
 ```
 
 1. In the cleaned "pols" dataset, there are `r nrow(pols_data)` rows and `r ncol(pols_data)`columns.The year range in this dataset is from `r min(pull(pols_data, year))` to `r max(pull(pols_data, year))`.
